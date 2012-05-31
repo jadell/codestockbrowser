@@ -1,6 +1,11 @@
 <?php
-$rawSessionData = json_decode(file_get_contents('http://codestock.org/api/v2.0.svc/AllSessionsJson'));
-$rawSpeakerData = json_decode(file_get_contents('http://codestock.org/api/v2.0.svc/AllSpeakersJson'));
+$handle = curl_init();
+curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($handle, CURLOPT_URL, 'http://codestock.org/api/v2.0.svc/AllSessionsJson');
+$rawSessionData = json_decode(curl_exec($handle));
+curl_setopt($handle, CURLOPT_URL, 'http://codestock.org/api/v2.0.svc/AllSpeakersJson');
+$rawSpeakerData = json_decode(curl_exec($handle));
+curl_close($handle);
 ($rawSpeakerData && $rawSessionData) or die('Could not retrieve data');
 
 $speakerData = array();
@@ -15,6 +20,8 @@ foreach ($rawSessionData->d as $raw) {
 	$raw->Speaker = $speakerData[$raw->SpeakerID];
 	$timeData[$raw->StartDay][$raw->StartTime][] = $raw;
 }
+unset($rawSessionData);
+unset($rawSpeakerData);
 ksort($timeData);
 foreach ($timeData as &$slots) {
 	ksort($slots);
@@ -74,6 +81,7 @@ foreach ($timeData as &$slots) {
 		</div><!-- /header -->
 
 		<div data-role="content">
+			<h2><?php echo date('D, M j', $day); ?></h2>
 			<?php foreach ($slots as $slot => $sessions) : ?>
 				<div data-role="collapsible" data-theme="e" data-content-theme="c">
 					<h3><?php echo date('h:i A', $slot); ?></h3>
