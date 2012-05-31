@@ -1,5 +1,5 @@
 <?php
-ini_set('date.timezone', 'EDT');
+ini_set('date.timezone', 'America/New_York');
 
 $handle = curl_init();
 curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
