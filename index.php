@@ -44,7 +44,7 @@ foreach ($timeData as &$slots) {
 	<style type="text/css">
 		img.speaker-photo {
 			float: left;
-			height: 5.4em;
+			height: 4.6em;
 			margin: 0 10px 0 0;
 			border-radius: 8px;
 				-moz-border-radius: 8px;
@@ -52,6 +52,12 @@ foreach ($timeData as &$slots) {
 		}
 		img[src=""] {
 			display: none;
+		}
+		div.session-abstract {
+			clear: both;
+		}
+		div.session-info + div.session-info, div.session-abstract {
+			margin-top: 10px;
 		}
 	</style>
 </head>
@@ -91,11 +97,14 @@ foreach ($timeData as &$slots) {
 						<div data-role="collapsible">
 							<h4><?php echo $session->Title; ?></h4>
 							<img class="speaker-photo" src="<?php echo $session->Speaker->PhotoUrl; ?>">
-							<p>
-								<?php echo $session->Speaker->Name; ?>
-								(Room <?php echo $session->Room; ?>)
-							</p>
-							<p><?php echo $session->Abstract; ?></p>
+							<div class="session-info"><?php echo $session->Speaker->Name; ?></div>
+							<div class="session-info">Room <?php echo $session->Room; ?></div>
+							<div class="session-info">
+								<?php echo date('h:i A', $session->StartTime); ?>
+								&mdash;
+								<?php echo date('h:i A', $session->EndTime); ?>
+							</div>
+							<div class="session-abstract"><?php echo $session->Abstract; ?></div>
 						</div>
 					<?php endforeach; ?>
 				</div>
