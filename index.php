@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('EDT');
+
 $handle = curl_init();
 curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($handle, CURLOPT_URL, 'http://codestock.org/api/v2.0.svc/AllSessionsJson');
