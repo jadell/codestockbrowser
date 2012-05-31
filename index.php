@@ -1,5 +1,5 @@
 <?php
-date_default_timezone_set('EDT');
+ini_set('date.timezone', 'EDT');
 
 $handle = curl_init();
 curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
