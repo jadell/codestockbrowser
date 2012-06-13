@@ -165,12 +165,12 @@ uasort($speakerData, function ($a, $b) {
 			<h2>
 				<?php echo $speaker->Name; ?>
 				<?php if ($speaker->TwitterID) : ?>
-					&bullet;<a href="http://twitter.com/<?php echo $speaker->TwitterID; ?>">
+					&bull;<a href="http://twitter.com/<?php echo $speaker->TwitterID; ?>">
 						@<?php echo $speaker->TwitterID; ?>
 					</a>
 				<?php endif; ?>
 				<?php if ($speaker->Website) : ?>
-					&bullet;<a href="<?php echo $speaker->Website; ?>">
+					&bull;<a href="<?php echo $speaker->Website; ?>">
 						<?php echo $speaker->Website; ?>
 					</a>
 				<?php endif; ?>
