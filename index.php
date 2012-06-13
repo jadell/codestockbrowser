@@ -13,6 +13,7 @@ curl_close($handle);
 $speakerData = array();
 $timeData = array();
 foreach ($rawSpeakerData->d as $raw) {
+	$raw->Sessions = array();
 	$speakerData[$raw->SpeakerID] = $raw;
 }
 foreach ($rawSessionData->d as $raw) {
@@ -20,6 +21,7 @@ foreach ($rawSessionData->d as $raw) {
 	$raw->StartDay = strtotime('today', $raw->StartTime);
 	$raw->EndTime = (preg_replace('/\D*(\d+)-.*/', '\1', $raw->EndTime)/1000);
 	$raw->Speaker = $speakerData[$raw->SpeakerID];
+	$speakerData[$raw->SpeakerID]->Sessions[] = $raw;
 	$timeData[$raw->StartDay][$raw->StartTime][] = $raw;
 }
 unset($rawSessionData);
@@ -28,7 +30,12 @@ ksort($timeData);
 foreach ($timeData as &$slots) {
 	ksort($slots);
 }
-
+uasort($speakerData, function ($a, $b) {
+	if ($a->Name == $b->Name) {
+		return 0;
+	}
+	return ($a->Name < $b->Name) ? -1 : 1;
+});
 ?>
 <!DOCTYPE html>
 <html>
@@ -59,6 +66,14 @@ foreach ($timeData as &$slots) {
 		div.session-info + div.session-info, div.session-abstract {
 			margin-top: 10px;
 		}
+		div.clear {
+			clear: both;
+		}
+		h2 > a {
+			text-decoration: none;
+			font-size: medium;
+			vertical-align: 15%;
+		}
 	</style>
 </head>
 <body>
@@ -75,6 +90,7 @@ foreach ($timeData as &$slots) {
 			<?php foreach ($timeData as $day => $slots) : ?>
 				<li><a href="#day-page-<?php echo $day; ?>"><?php echo date('D, M j', $day); ?></a></li>
 			<?php endforeach; ?>
+			<li><a href="#speaker-page">Speakers</a></li>
 		</ul>
 	</div><!-- /content -->
 
@@ -84,7 +100,7 @@ foreach ($timeData as &$slots) {
 	<div data-role="page" id="day-page-<?php echo $day; ?>">
 
 		<div data-role="header">
-			<a href="#home-page" data-icon="arrow-l">Back</a>
+			<a href="#home-page" data-rel="back" data-icon="arrow-l">Back</a>
 			<h1>CodeStock 2012 - <?php echo date('D, M j', $day); ?></h1>
 		</div><!-- /header -->
 
@@ -97,7 +113,11 @@ foreach ($timeData as &$slots) {
 						<div data-role="collapsible">
 							<h4><?php echo $session->Title; ?></h4>
 							<img class="speaker-photo" src="<?php echo $session->Speaker->PhotoUrl; ?>">
-							<div class="session-info"><?php echo $session->Speaker->Name; ?></div>
+							<div class="session-info">
+								<a href="#speaker-page-<?php echo $session->Speaker->SpeakerID; ?>">
+								<?php echo $session->Speaker->Name; ?>
+								</a>
+							</div>
 							<div class="session-info">Room <?php echo $session->Room; ?></div>
 							<div class="session-info">
 								<?php echo date('h:i A', $session->StartTime); ?>
@@ -114,6 +134,68 @@ foreach ($timeData as &$slots) {
 	</div><!-- /page -->
 <?php endforeach; ?>
 
+<div data-role="page" id="speaker-page">
+	<div data-role="header">
+		<a href="#home-page" data-rel="back" data-icon="arrow-l">Back</a>
+		<h1>CodeStock 2012 - Speakers</h1>
+	</div><!-- /header -->
+
+	<div data-role="content">
+		<h3>Speakers</h3>
+		<ul data-role="listview">
+			<?php foreach ($speakerData as $speaker) : ?>
+				<li><a href="#speaker-page-<?php echo $speaker->SpeakerID; ?>">
+					<?php echo $speaker->Name; ?>
+			</a></li>
+			<?php endforeach; ?>
+		</ul>
+	</div><!-- /content -->
+
+</div><!-- /page -->
+
+<?php foreach ($speakerData as $speaker) : ?>
+	<div data-role="page" id="speaker-page-<?php echo $speaker->SpeakerID; ?>">
+
+		<div data-role="header">
+			<a href="#speaker-page" data-rel="back" data-icon="arrow-l">Back</a>
+			<h1>CodeStock 2012 - <?php echo $speaker->Name; ?></h1>
+		</div><!-- /header -->
+
+		<div data-role="content">
+			<h2>
+				<?php echo $speaker->Name; ?>
+				<?php if ($speaker->TwitterID) : ?>
+					&bullet;<a href="http://twitter.com/<?php echo $speaker->TwitterID; ?>">
+						@<?php echo $speaker->TwitterID; ?>
+					</a>
+				<?php endif; ?>
+				<?php if ($speaker->Website) : ?>
+					&bullet;<a href="<?php echo $speaker->Website; ?>">
+						<?php echo $speaker->Website; ?>
+					</a>
+				<?php endif; ?>
+			</h2>
+			<img class="speaker-photo" src="<?php echo $speaker->PhotoUrl; ?>">
+			<div class="speaker-bio"><?php echo $speaker->Bio; ?></div>
+			<div class="clear"></div>
+			<h3>Sessions</h3>
+			<?php foreach ($speaker->Sessions as $session) : ?>
+				<div data-role="collapsible">
+					<h4><?php echo $session->Title; ?></h4>
+					<div class="session-info">Room <?php echo $session->Room; ?></div>
+					<div class="session-info">
+						<?php echo date('D, M j', $session->StartTime); ?>:
+						<?php echo date('h:i A', $session->StartTime); ?>
+						&mdash;
+						<?php echo date('h:i A', $session->EndTime); ?>
+					</div>
+					<div class="session-abstract"><?php echo $session->Abstract; ?></div>
+				</div>
+			<?php endforeach; ?>
+		</div><!-- /content -->
+
+	</div><!-- /page -->
+<?php endforeach; ?>
 
 </body>
 </html>
