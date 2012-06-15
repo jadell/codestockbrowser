@@ -7,11 +7,24 @@ curl_setopt($handle, CURLOPT_URL, 'http://codestock.org/api/v2.0.svc/AllSessions
 $rawSessionData = json_decode(curl_exec($handle));
 curl_setopt($handle, CURLOPT_URL, 'http://codestock.org/api/v2.0.svc/AllSpeakersJson');
 $rawSpeakerData = json_decode(curl_exec($handle));
-curl_close($handle);
 ($rawSpeakerData && $rawSessionData) or die('Could not retrieve data');
+
+// Do we have a specific user in mind?
+$email = trim($_GET['email']);
+$userSessions = false;
+if ($email) {
+	curl_setopt($handle, CURLOPT_URL, 'http://codestock.org/api/v2.0.svc/GetUserIDJson?Email='.$email);
+	$userId = json_decode(curl_exec($handle));
+	if ($userId && $userId->d) {
+		curl_setopt($handle, CURLOPT_URL, 'http://codestock.org/api/v2.0.svc/GetScheduleJson?ScheduleID='.$userId->d);
+		$userSessions = json_decode(curl_exec($handle))->d;
+	}
+}
+curl_close($handle);
 
 $speakerData = array();
 $timeData = array();
+$sessionData = array();
 foreach ($rawSpeakerData->d as $raw) {
 	$raw->Sessions = array();
 	$speakerData[$raw->SpeakerID] = $raw;
@@ -21,6 +34,7 @@ foreach ($rawSessionData->d as $raw) {
 	$raw->StartDay = strtotime('today', $raw->StartTime);
 	$raw->EndTime = (preg_replace('/\D*(\d+)-.*/', '\1', $raw->EndTime)/1000);
 	$raw->Speaker = $speakerData[$raw->SpeakerID];
+	$sessionData[$raw->SessionID] = $raw;
 	$speakerData[$raw->SpeakerID]->Sessions[] = $raw;
 	$timeData[$raw->StartDay][$raw->StartTime][] = $raw;
 }
@@ -36,6 +50,7 @@ uasort($speakerData, function ($a, $b) {
 	}
 	return ($a->Name < $b->Name) ? -1 : 1;
 });
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -91,6 +106,9 @@ uasort($speakerData, function ($a, $b) {
 				<li><a href="#day-page-<?php echo $day; ?>"><?php echo date('D, M j', $day); ?></a></li>
 			<?php endforeach; ?>
 			<li><a href="#speaker-page">Speakers</a></li>
+			<?php if ($userSessions) : ?>
+				<li><a href="#my-page">My Schedule</a></li>
+			<?php endif; ?>
 		</ul>
 	</div><!-- /content -->
 
@@ -196,6 +214,46 @@ uasort($speakerData, function ($a, $b) {
 
 	</div><!-- /page -->
 <?php endforeach; ?>
+
+<?php if ($userSessions) : ?>
+	<div data-role="page" id="my-page">
+
+		<div data-role="header">
+			<a href="#home-page" data-rel="back" data-icon="arrow-l">Back</a>
+			<h1>CodeStock 2012 - My Schedule</h1>
+		</div><!-- /header -->
+
+		<div data-role="content">
+			<h2>Schedule for <?php echo $email; ?></h2>
+			<?php foreach ($userSessions as $sessionId) :
+				$session = $sessionData[$sessionId];
+			?>
+				<div data-role="collapsible">
+					<h4>
+						<?php echo date('D, M j', $session->StartTime); ?>:
+						<?php echo date('h:i A', $session->StartTime); ?><br>
+						<?php echo $session->Title; ?>
+					</h4>
+					<img class="speaker-photo" src="<?php echo $session->Speaker->PhotoUrl; ?>">
+					<div class="session-info">
+						<a href="#speaker-page-<?php echo $session->Speaker->SpeakerID; ?>">
+						<?php echo $session->Speaker->Name; ?>
+						</a>
+					</div>
+					<div class="session-info">Room <?php echo $session->Room; ?></div>
+					<div class="session-info">
+						<?php echo date('D, M j', $session->StartTime); ?>:
+						<?php echo date('h:i A', $session->StartTime); ?>
+						&mdash;
+						<?php echo date('h:i A', $session->EndTime); ?>
+					</div>
+					<div class="session-abstract"><?php echo $session->Abstract; ?></div>
+				</div>
+			<?php endforeach; ?>
+		</div><!-- /content -->
+
+	</div><!-- /page -->
+<?php endif; ?>
 
 </body>
 </html>
