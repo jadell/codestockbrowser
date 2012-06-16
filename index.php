@@ -41,8 +41,9 @@ foreach ($rawSessionData->d as $raw) {
 unset($rawSessionData);
 unset($rawSpeakerData);
 ksort($timeData);
-foreach ($timeData as &$slots) {
+foreach ($timeData as $day => $slots) {
 	ksort($slots);
+	$timeData[$day] = $slots;
 }
 uasort($speakerData, function ($a, $b) {
 	if ($a->Name == $b->Name) {
@@ -50,7 +51,6 @@ uasort($speakerData, function ($a, $b) {
 	}
 	return ($a->Name < $b->Name) ? -1 : 1;
 });
-
 ?>
 <!DOCTYPE html>
 <html>
